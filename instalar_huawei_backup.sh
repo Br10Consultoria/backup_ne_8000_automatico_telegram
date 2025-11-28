@@ -53,7 +53,9 @@ cd /opt/huawei-backup
 # -----------------------------
 echo "[6/8] Criando arquivos do sistema..."
 
-# Dockerfile
+# ----------------------------------------------------
+# DOCKERFILE CORRIGIDO (FINAL)
+# ----------------------------------------------------
 cat << 'EOF' > Dockerfile
 FROM python:3.11-slim
 
@@ -88,9 +90,11 @@ RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 EOF
 
-# docker-compose.yml
+
+# ----------------------------------------------------
+# DOCKER-COMPOSE
+# ----------------------------------------------------
 cat << 'EOF' > docker-compose.yml
-version: "3.9"
 
 services:
   huawei-backup:
@@ -105,6 +109,10 @@ services:
     tty: true
 EOF
 
+
+# ----------------------------------------------------
+# ENTRYPOINT.SH CORRETO
+# ----------------------------------------------------
 cat << 'EOF' > entrypoint.sh
 #!/bin/bash
 
@@ -125,14 +133,18 @@ EOF
 chmod +x entrypoint.sh
 
 
-# requirements.txt
+# ----------------------------------------------------
+# REQUIREMENTS
+# ----------------------------------------------------
 cat << 'EOF' > requirements.txt
 python-dotenv
 requests
 EOF
 
 
-# .env (modelo)
+# ----------------------------------------------------
+# .ENV MODELO
+# ----------------------------------------------------
 cat << 'EOF' > .env
 # ------------ HUAWEI ------------
 HUAWEI_IP=100.64.70.22
@@ -147,8 +159,8 @@ FTP_USER=1
 FTP_PASSWORD=1
 
 # ---------- TELEGRAM -----------
-TELEGRAM_TOKEN=7873950843:AAENKqtp-LGIsXkcJuOA_A65-vQ0wY16TnM
-TELEGRAM_CHAT_ID=-4506407922
+TELEGRAM_TOKEN=SEU_TOKEN_AQUI
+TELEGRAM_CHAT_ID=SEU_CHAT_ID_AQUI
 
 # ---------- DIRETÓRIOS ----------
 LOCAL_BACKUP_PATH=/backups
@@ -160,7 +172,9 @@ TELNET_TIMEOUT=20
 EOF
 
 
-# Script Python principal
+# ----------------------------------------------------
+# SCRIPT PYTHON PRINCIPAL
+# ----------------------------------------------------
 cat << 'EOF' > backup_huawei_ne.py
 import telnetlib
 import time
@@ -268,7 +282,6 @@ def run_backup():
         tn.write(b"quit\n")
         tn.close()
 
-        # DOWNLOAD ARQUIVOS
         ftp_download(filename_admin, f"{LOCAL_BACKUP_PATH}/{filename_admin}")
         ftp_download(filename_bgp, f"{LOCAL_BACKUP_PATH}/{filename_bgp}")
 
@@ -282,7 +295,7 @@ if __name__ == "__main__":
 EOF
 
 echo "[7/8] Construindo imagem..."
-docker compose build
+docker compose build --no-cache
 
 echo "[8/8] Subindo container..."
 docker compose up -d
