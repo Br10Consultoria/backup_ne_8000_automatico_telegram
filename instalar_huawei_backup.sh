@@ -53,15 +53,12 @@ cd /opt/huawei-backup
 # -----------------------------
 echo "[6/8] Criando arquivos do sistema..."
 
-# ----------------------------------------------------
-# DOCKERFILE CORRIGIDO (FINAL)
-# ----------------------------------------------------
+# Dockerfile
 cat << 'EOF' > Dockerfile
 FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y \
     cron \
-    rsyslog \
     telnet \
     ftp \
     && rm -rf /var/lib/apt/lists/*
@@ -81,20 +78,13 @@ RUN echo "0 3 * * 1 root python3 /app/backup_huawei_ne.py >> /var/log/cron.log 2
 RUN chmod 0644 /etc/cron.d/backup-cron
 RUN crontab /etc/cron.d/backup-cron
 
-RUN touch /var/log/cron.log
-RUN chmod 666 /var/log/cron.log
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+CMD cron && tail -f /var/log/cron.log
 EOF
 
 
-# ----------------------------------------------------
-# DOCKER-COMPOSE
-# ----------------------------------------------------
+# docker-compose.yml
 cat << 'EOF' > docker-compose.yml
+version: "3.9"
 
 services:
   huawei-backup:
@@ -110,41 +100,14 @@ services:
 EOF
 
 
-# ----------------------------------------------------
-# ENTRYPOINT.SH CORRETO
-# ----------------------------------------------------
-cat << 'EOF' > entrypoint.sh
-#!/bin/bash
-
-touch /var/log/cron.log
-chmod 666 /var/log/cron.log
-
-service rsyslog start
-service cron start
-
-echo "=== Serviços Iniciados ==="
-echo "Cron e rsyslog estão rodando."
-echo "Monitorando /var/log/cron.log..."
-echo "==========================="
-
-tail -f /var/log/cron.log
-EOF
-
-chmod +x entrypoint.sh
-
-
-# ----------------------------------------------------
-# REQUIREMENTS
-# ----------------------------------------------------
+# requirements.txt
 cat << 'EOF' > requirements.txt
 python-dotenv
 requests
 EOF
 
 
-# ----------------------------------------------------
-# .ENV MODELO
-# ----------------------------------------------------
+# .env (modelo)
 cat << 'EOF' > .env
 # ------------ HUAWEI ------------
 HUAWEI_IP=100.64.70.22
@@ -159,8 +122,8 @@ FTP_USER=1
 FTP_PASSWORD=1
 
 # ---------- TELEGRAM -----------
-TELEGRAM_TOKEN=SEU_TOKEN_AQUI
-TELEGRAM_CHAT_ID=SEU_CHAT_ID_AQUI
+TELEGRAM_TOKEN=7873950843:AAENKqtp-LGIsXkcJuOA_A65-vQ0wY16TnM
+TELEGRAM_CHAT_ID=-4506407922
 
 # ---------- DIRETÓRIOS ----------
 LOCAL_BACKUP_PATH=/backups
@@ -172,9 +135,7 @@ TELNET_TIMEOUT=20
 EOF
 
 
-# ----------------------------------------------------
-# SCRIPT PYTHON PRINCIPAL
-# ----------------------------------------------------
+# Script Python principal
 cat << 'EOF' > backup_huawei_ne.py
 import telnetlib
 import time
@@ -282,6 +243,7 @@ def run_backup():
         tn.write(b"quit\n")
         tn.close()
 
+        # DOWNLOAD ARQUIVOS
         ftp_download(filename_admin, f"{LOCAL_BACKUP_PATH}/{filename_admin}")
         ftp_download(filename_bgp, f"{LOCAL_BACKUP_PATH}/{filename_bgp}")
 
@@ -295,7 +257,7 @@ if __name__ == "__main__":
 EOF
 
 echo "[7/8] Construindo imagem..."
-docker compose build --no-cache
+docker compose build
 
 echo "[8/8] Subindo container..."
 docker compose up -d
