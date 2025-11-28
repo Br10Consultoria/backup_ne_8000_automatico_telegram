@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backup_huawei_ne.py .
-COPY .env .
+COPY .env.exemplo .
 
 RUN mkdir -p /backups
 RUN mkdir -p /logs
